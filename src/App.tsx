@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import Layout from './components/Layout';
 import ZipUploadSection from './components/ZipUploadSection';
-import ErrorSection from './components/ErrorSection';
 import MetadataSection from './components/MetadataSection';
 import ProcessingSection from './components/ProcessingSection';
 import GettingStartedSection from './components/GettingStartedSection';
+import LoadingSkeleton from './components/LoadingSkeleton';
 import { YAMLParser } from './services/yamlParser';
 import { ZipHandler } from './services/zipHandler';
 import { PDFTrimmer } from './services/pdfTrimmer';
@@ -16,11 +17,11 @@ const App: React.FC = () => {
 	const [pdfFiles, setPdfFiles] = useState<Map<string, File>>(new Map());
 	const [pagesToKeep, setPagesToKeep] = useState<number>(1);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [isLoadingZip, setIsLoadingZip] = useState(false);
 	const [progress, setProgress] = useState<{
 		current: number;
 		total: number;
 	} | null>(null);
-	const [error, setError] = useState<string | null>(null);
 
 	const handleZipUpload = async (
 		event: React.ChangeEvent<HTMLInputElement>
@@ -29,9 +30,9 @@ const App: React.FC = () => {
 		if (!file) return;
 
 		setZipFile(file);
-		setError(null);
 		setMetadata(null);
 		setPdfFiles(new Map());
+		setIsLoadingZip(true);
 
 		try {
 			// Extract ZIP contents
@@ -48,10 +49,14 @@ const App: React.FC = () => {
 			const parsedMetadata = YAMLParser.parse(yamlText);
 			setMetadata(parsedMetadata);
 			setPdfFiles(contents.pdfFiles);
+			toast.success(`Successfully loaded ${contents.pdfFiles.size} PDFs`);
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : 'Unknown error';
-			setError(`Failed to process ZIP: ${errorMessage}`);
+			toast.error(`Failed to process ZIP: ${errorMessage}`);
+			setZipFile(null);
+		} finally {
+			setIsLoadingZip(false);
 		}
 	};
 
@@ -59,7 +64,6 @@ const App: React.FC = () => {
 		if (!metadata || pdfFiles.size === 0) return;
 
 		setIsProcessing(true);
-		setError(null);
 		setProgress({ current: 0, total: pdfFiles.size });
 
 		try {
@@ -87,19 +91,17 @@ const App: React.FC = () => {
 			}
 
 			// Create ZIP file
-			const outputZip = await ZipHandler.createZipFile(
-				renamedPdfs,
-				'processed_submissions.zip'
-			);
+			const outputZip = await ZipHandler.createZipFile(renamedPdfs);
 
 			// Download the ZIP
 			ZipHandler.downloadFile(outputZip);
 
+			toast.success('PDFs processed successfully! Download started.');
 			setProgress(null);
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : 'Unknown error';
-			setError(`Failed to process PDFs: ${errorMessage}`);
+			toast.error(`Failed to process PDFs: ${errorMessage}`);
 		} finally {
 			setIsProcessing(false);
 		}
@@ -111,9 +113,9 @@ const App: React.FC = () => {
 		<Layout>
 			<ZipUploadSection zipFile={zipFile} onZipUpload={handleZipUpload} />
 
-			{error && <ErrorSection error={error} />}
+			{isLoadingZip && <LoadingSkeleton />}
 
-			{metadata && stats && (
+			{!isLoadingZip && metadata && stats && (
 				<MetadataSection
 					metadata={metadata}
 					pdfFilesCount={pdfFiles.size}
@@ -121,7 +123,7 @@ const App: React.FC = () => {
 				/>
 			)}
 
-			{metadata && (
+			{!isLoadingZip && metadata && (
 				<ProcessingSection
 					pagesToKeep={pagesToKeep}
 					isProcessing={isProcessing}
@@ -131,7 +133,7 @@ const App: React.FC = () => {
 				/>
 			)}
 
-			{!zipFile && <GettingStartedSection />}
+			{!zipFile && !isLoadingZip && <GettingStartedSection />}
 		</Layout>
 	);
 };

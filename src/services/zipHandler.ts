@@ -57,7 +57,7 @@ export class ZipHandler {
 	 */
 	static async createZipFile(
 		files: Map<string, Blob>,
-		zipFilename: string = 'processed_submissions.zip'
+		zipFilename: string = 'assignments.zip'
 	): Promise<File> {
 		const zip = new JSZip();
 

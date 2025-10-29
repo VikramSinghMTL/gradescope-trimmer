@@ -1,5 +1,5 @@
 {
-	"name": "gradescope-pdf-trimmer",
+	"name": "gradescope-trimmer",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
@@ -10,11 +10,14 @@
 		"lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
 	},
 	"dependencies": {
+		"@catppuccin/palette": "^1.7.1",
 		"js-yaml": "^4.1.0",
 		"jszip": "^3.10.1",
+		"lucide-react": "^0.548.0",
 		"pdf-lib": "^1.17.1",
 		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
+		"react-dom": "^18.2.0",
+		"react-hot-toast": "^2.6.0"
 	},
 	"devDependencies": {
 		"@types/js-yaml": "^4.0.9",

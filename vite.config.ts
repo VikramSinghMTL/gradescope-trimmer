@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
 	plugins: [react()],
-	base: '/gradescope-pdf-trimmer/',
+	base: '/gradescope-trimmer/',
 	build: {
 		outDir: 'dist',
 		sourcemap: true,
